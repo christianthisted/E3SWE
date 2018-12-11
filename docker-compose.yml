@@ -1,0 +1,52 @@
+version: '3.5'
+
+services:
+
+  web_server:
+    container_name: nginx
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    ports:
+      - "80:80"
+
+    networks:
+      - web_nw
+    depends_on:
+      - app
+    volumes:
+          - ./conf.d:/etc/nginx/conf.d
+
+  app:
+    container_name: flask
+    build:
+          context: .
+          dockerfile: docker/flask/Dockerfile
+    env_file: docker/database.conf
+    expose:
+      - 8080
+    networks:
+      - db_nw
+      - web_nw
+    depends_on:
+      - db
+
+  db:
+    container_name: postgres
+    image: postgres:latest
+    env_file: docker/database.conf
+    ports:
+      - 5432:5432
+    networks:
+      - db-nw
+    volumes:
+      - "dbdata:/var/lib/postgresql/data"
+
+networks:
+  db_nw:
+    driver: bridge
+  web_nw:
+    driver: bridge
+
+volumes:
+  dbdata:
